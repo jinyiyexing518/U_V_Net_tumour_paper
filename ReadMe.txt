@@ -1,0 +1,2 @@
+本工程文件夹，为了paper，做对比实验
+dataset中的数据，预处理结果可以直接从V_Net_tumour_processing_data工程文件夹中获取
