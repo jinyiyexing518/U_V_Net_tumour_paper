@@ -11,7 +11,6 @@ from keras import layers
 from keras.layers import Concatenate
 from keras import activations
 from keras import backend as K
-
 from keras.callbacks import ModelCheckpoint
 from refine_net.net.fit_generator import get_path_list, get_train_batch
 import matplotlib.pyplot as plt
