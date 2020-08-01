@@ -42,7 +42,7 @@ class WeightedBinaryCrossEntropy(object):
         # Transform to logits
         epsilon = tf.convert_to_tensor(K.common._EPSILON, y_pred.dtype.base_dtype)
         y_pred = tf.clip_by_value(y_pred, epsilon, 1 - epsilon)
-        y_pred = tf.log(y_pred / (1 - y_pred))
+        y_pred = tf.math.log(y_pred / (1 - y_pred))
 
         cost = tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, self.weights)
         return K.mean(cost * self.pos_ratio, axis=-1)
