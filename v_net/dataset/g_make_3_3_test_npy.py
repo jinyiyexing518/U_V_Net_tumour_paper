@@ -6,7 +6,7 @@ import cv2 as cv
 import numpy as np
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
 
-from test_model.vnet3_test import dir_num
+from v_net.test_model.vnet3_test import dir_num
 # dir_num = 129
 # 制作哪一个dir的数据
 # dir_num -= 121
@@ -14,9 +14,9 @@ image_size = 400
 depth = 3
 
 
-train_png_path = "./data_cv_clip/test/train"
+train_png_path = "../../u_net/dataset/data_cv_clip/test/train"
 
-label_png_path = "./data_cv_clip/test/label"
+label_png_path = "../../u_net/dataset/data_cv_clip/test/label"
 train_64_input_path = "./vnet_" + str(depth) + "_3_test_npy/train"
 label_64_input_path = "./vnet_" + str(depth) + "_3_test_npy/label"
 if not os.path.isdir(train_64_input_path):
@@ -59,7 +59,7 @@ for i in range(len(train_pngs)):
             train_img = np.reshape(train_img, (image_size, image_size, 1))
             train_npy[j] = train_img
             label_img = np.reshape(label_img, (image_size, image_size, 1))
-            label_npy[j] = label_img
+            label_npy = label_img
 
         train_npys[i] = train_npy
         label_npys[i] = label_npy
