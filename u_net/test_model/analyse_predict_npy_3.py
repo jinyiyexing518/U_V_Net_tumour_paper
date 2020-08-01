@@ -3,7 +3,7 @@ import numpy as np
 import cv2 as cv
 from u_net.test_model.plot_test_dice_histogram import plot_test_dice_histogram
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
-from evaluation_criterion.evaluation_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
+from evaluation_criterion.eval_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
     cal_ASSD, cal_hausdorff, cal_surface_overlap
 
 
