@@ -106,6 +106,7 @@ def cal_ASSD(predict, label):
     """
     Average Symmetric Surface Distance (ASSD)
     平均表面距离
+    满分：(0.0, 0.0)
     :param predict:
     :param label:gt(ground truth)
     :return:
@@ -119,6 +120,7 @@ def cal_ASSD(predict, label):
 def cal_hausdorff(predict, label):
     """
      豪斯多夫距离
+     满分：0.0
     :param predict:
     :param label:
     :return:
@@ -131,7 +133,9 @@ def cal_hausdorff(predict, label):
 
 def cal_surface_overlap(predict, label):
     """
-    Surface overlap 表面重叠度
+    Surface overlap
+    表面重叠度
+    满分：(1.0, 1.0)
     :param predict:
     :param label:
     :return:
