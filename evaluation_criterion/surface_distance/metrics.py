@@ -318,7 +318,7 @@ def compute_average_surface_distance(surface_distances):
   average_distance_pred_to_gt = (
       np.sum(distances_pred_to_gt * surfel_areas_pred) /
       np.sum(surfel_areas_pred))
-  return (average_distance_gt_to_pred, average_distance_pred_to_gt)
+  return np.array([average_distance_gt_to_pred, average_distance_pred_to_gt])
 
 
 def compute_robust_hausdorff(surface_distances, percent):
@@ -390,7 +390,7 @@ def compute_surface_overlap_at_tolerance(surface_distances, tolerance_mm):
   rel_overlap_pred = (
       np.sum(surfel_areas_pred[distances_pred_to_gt <= tolerance_mm]) /
       np.sum(surfel_areas_pred))
-  return (rel_overlap_gt, rel_overlap_pred)
+  return np.array([rel_overlap_gt, rel_overlap_pred])
 
 
 def compute_surface_dice_at_tolerance(surface_distances, tolerance_mm):
