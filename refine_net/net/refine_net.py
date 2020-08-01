@@ -13,7 +13,7 @@ from keras import activations
 from keras import backend as K
 
 from keras.callbacks import ModelCheckpoint
-from u_net.net.fit_generator import get_path_list, get_train_batch
+from refine_net.net.fit_generator import get_path_list, get_train_batch
 import matplotlib.pyplot as plt
 
 # 每次训练模型之前，需要修改的三个地方，训练数据地址、保存模型地址、保存训练曲线地址
