@@ -105,9 +105,9 @@ for i in range(len(npy_data)):
     fscore_list.append(Fscore*100)
     jaccard_list.append(Jaccard*100)
     accuracy_list.append(Accuracy*100)
-    assd_list.append(ASSD*100)
-    haus_list.append(hausdorff*100)
-    surface_list.append(surface_overlap*100)
+    assd_list.append(ASSD)
+    haus_list.append(hausdorff)
+    surface_list.append(surface_overlap)
 
     # 查看dice系数较小的分割结果
     # 会发现，dice系数较小的分割结果，往往都是肝脏占比比较小的图像
@@ -155,7 +155,7 @@ print("测试数据的平均recall值：{}".format(np.mean(recall_list)))
 print("测试数据的平均fscore值：{}".format(np.mean(fscore_list)))
 print("测试数据的平均jaccard值：{}".format(np.mean(jaccard_list)))
 print("测试数据的平均accuracy值：{}".format(np.mean(accuracy_list)))
-print("ASSD:{}, full marks:{}".format(np.mean(assd_list), (0.0, 0.0)))
+print("ASSD:{}, full marks:{}".format(np.mean(assd_list, axis=0), (0.0, 0.0)))
 print("hausdorff:{}, full marks:{}".format(np.mean(haus_list), 0.0))
-print("surface_overlap:{}, full marks:{}".format(np.mean(surface_list), (1.0, 1.0)))
+print("surface_overlap:{}, full marks:{}".format(np.mean(surface_list, axis=0), (1.0, 1.0)))
 
