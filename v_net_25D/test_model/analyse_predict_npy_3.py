@@ -3,7 +3,8 @@ import numpy as np
 import cv2 as cv
 from v_net_25D.test_model.plot_test_dice_histogram import plot_test_dice_histogram
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
-from evaluation_criterion.evaluation_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard
+from evaluation_criterion.eval_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
+    cal_ASSD, cal_hausdorff, cal_surface_overlap
 
 
 # 计算DICE系数
@@ -46,6 +47,9 @@ accuracy_list = []
 fscore_list = []
 jaccard_list = []
 recall_list = []
+assd_list = []
+haus_list = []
+surface_list = []
 for i in range(len(npy_data)):
     img = npy_data[i]
     label = npy_label[i]
@@ -86,15 +90,24 @@ for i in range(len(npy_data)):
     Fscore = calFscore(img, label)
     Jaccard = calJaccard(img, label)
     Accuracy = calAccuracy(img, label)
+    # 较常用的metric：Hausdorff distance和Volumetric dice
+    ASSD = cal_ASSD(img, label)
+    hausdorff = cal_hausdorff(img, label)
+    surface_overlap = cal_surface_overlap(img, label)
 
-    print("第{}组数据---dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{}"
-          .format(i+1, dice, Precision, Recall, Fscore, Jaccard, Accuracy), pixel_num)
+    print("第{}组数据---dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{} "
+          "ASSD:{} hausdorff:{} surface_overlap:{}"
+          .format(i+1, dice, Precision, Recall, Fscore, Jaccard, Accuracy,
+                  ASSD, hausdorff, surface_overlap), pixel_num)
     dice_list.append(dice*100)
     precision_list.append(Precision*100)
     recall_list.append(Recall*100)
     fscore_list.append(Fscore*100)
     jaccard_list.append(Jaccard*100)
     accuracy_list.append(Accuracy*100)
+    assd_list.append(ASSD)
+    haus_list.append(hausdorff)
+    surface_list.append(surface_overlap)
 
     # 查看dice系数较小的分割结果
     # 会发现，dice系数较小的分割结果，往往都是肝脏占比比较小的图像
@@ -142,5 +155,8 @@ print("测试数据的平均recall值：{}".format(np.mean(recall_list)))
 print("测试数据的平均fscore值：{}".format(np.mean(fscore_list)))
 print("测试数据的平均jaccard值：{}".format(np.mean(jaccard_list)))
 print("测试数据的平均accuracy值：{}".format(np.mean(accuracy_list)))
+print("ASSD:{}, full marks:{}".format(np.mean(assd_list, axis=0), (0.0, 0.0)))
+print("hausdorff:{}, full marks:{}".format(np.mean(haus_list), 0.0))
+print("surface_overlap:{}, full marks:{}".format(np.mean(surface_list, axis=0), (1.0, 1.0)))
 
 
