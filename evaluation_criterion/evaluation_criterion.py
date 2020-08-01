@@ -111,7 +111,7 @@ def cal_ASSD(predict, label):
     :return:
     """
     surface_distances = metrics.compute_surface_distances(
-        label, predict, spacing_mm=(1.0, 1.0, 1.0))
+        label, predict, spacing_mm=(1.0, 1.0))
     avg_surf_dist = metrics.compute_average_surface_distance(surface_distances)
     return avg_surf_dist
 
@@ -124,7 +124,7 @@ def cal_hausdorff(predict, label):
     :return:
     """
     surface_distances = metrics.compute_surface_distances(
-        label, predict, spacing_mm=(1.0, 1.0, 1.0))
+        label, predict, spacing_mm=(1.0, 1.0))
     hd_dist_95 = metrics.compute_robust_hausdorff(surface_distances, 95)
     return hd_dist_95
 
@@ -137,7 +137,7 @@ def cal_surface_overlap(predict, label):
     :return:
     """
     surface_distances = metrics.compute_surface_distances(
-        label, predict, spacing_mm=(1.0, 1.0, 1.0))
+        label, predict, spacing_mm=(1.0, 1.0))
     surface_overlap = metrics.compute_surface_overlap_at_tolerance(surface_distances, 1)
     return surface_overlap
 
@@ -166,6 +166,8 @@ if __name__ == "__main__":
     print("Dice:{}".format(calDice(predict, label)))
     print("Jaccard:{}".format(calJaccard(predict, label)))
     print("Fscore:{}".format(calFscore(predict, label)))
+    predict = predict.astype(np.bool)
+    label = label.astype(np.bool)
     print("ASSD:{}".format(cal_ASSD(predict, label)))
     # 较常用的metric：Hausdorff distance和Volumetric dice
     print("hausdorff:{}".format(cal_hausdorff(predict, label)))
