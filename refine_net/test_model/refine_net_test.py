@@ -10,7 +10,7 @@ model_num = "5"
 model = "tumour"
 
 test_npy = "../dataset/unet_1_1_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"
-model_name = "./model_pre_mean/unet_" + model + model_num + ".hdf5"
+model_name = "./model_pre_mean/refine_net_" + model + model_num + ".hdf5"
 predict_result = "./predict_npy_pre_mean/predict" + str(dir_num) + "_" + model \
                  + "_epoch" + model_num + ".npy"
 
