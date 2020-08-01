@@ -5,8 +5,8 @@ import tensorflow as tf
 # from vnet_25D.vnet11_1.vnet import dice_coef
 
 
-dir_num = 118
-model_num = "6"
+dir_num = 129
+model_num = "3"
 model = "tumour"
 
 test_npy = "../dataset/vnet_3_3_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"

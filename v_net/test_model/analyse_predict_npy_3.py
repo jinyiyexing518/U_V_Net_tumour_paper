@@ -3,6 +3,8 @@ import numpy as np
 import cv2 as cv
 from v_net.test_model.plot_test_dice_histogram import plot_test_dice_histogram
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
+from evaluation_criterion.eval_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
+    cal_ASSD, cal_hausdorff, cal_surface_overlap
 
 
 # 计算DICE系数
@@ -40,8 +42,16 @@ npy_label = np.load(label_path)
 npy_train = np.load(train_path)
 print("共预测了{}组数据".format(len(npy_data)))
 dice_list = []
+precision_list = []
+accuracy_list = []
+fscore_list = []
+jaccard_list = []
+recall_list = []
+assd_list = []
+haus_list = []
+surface_list = []
 for i in range(len(npy_data)):
-    img = npy_data[i]
+    img = npy_data[i][1]
     label = npy_label[i]
     #######################
     # raw_label
@@ -49,7 +59,7 @@ for i in range(len(npy_data)):
     # label = label[0: 400, 50: 450]
     #######################
     train = npy_train[i]
-    label = np.reshape(label[1], (imgs_size, imgs_size))
+    label = np.reshape(label, (imgs_size, imgs_size))
     train = np.reshape(train[1], (imgs_size, imgs_size))
 
     img = np.reshape(img, (imgs_size, imgs_size))
@@ -73,10 +83,31 @@ for i in range(len(npy_data)):
     white_pixel = label == 255
     pixel_num = len(label[white_pixel])
 
-    # # 计算dice系数
+    # 计算评价指标
     dice = calDice(label, img)
-    print("第{}组数据---dice:{}".format(i+1, dice), pixel_num)
+    Precision = calPrecision(img, label)
+    Recall = calRecall(img, label)
+    Fscore = calFscore(img, label)
+    Jaccard = calJaccard(img, label)
+    Accuracy = calAccuracy(img, label)
+    # 较常用的metric：Hausdorff distance和Volumetric dice
+    ASSD = cal_ASSD(img, label)
+    hausdorff = cal_hausdorff(img, label)
+    surface_overlap = cal_surface_overlap(img, label)
+
+    print("第{}组数据---dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{} "
+          "ASSD:{} hausdorff:{} surface_overlap:{}"
+          .format(i+1, dice, Precision, Recall, Fscore, Jaccard, Accuracy,
+                  ASSD, hausdorff, surface_overlap), pixel_num)
     dice_list.append(dice*100)
+    precision_list.append(Precision*100)
+    recall_list.append(Recall*100)
+    fscore_list.append(Fscore*100)
+    jaccard_list.append(Jaccard*100)
+    accuracy_list.append(Accuracy*100)
+    assd_list.append(ASSD)
+    haus_list.append(hausdorff)
+    surface_list.append(surface_overlap)
 
     # 查看dice系数较小的分割结果
     # 会发现，dice系数较小的分割结果，往往都是肝脏占比比较小的图像
@@ -119,5 +150,12 @@ for i in range(len(npy_data)):
 
 plot_test_dice_histogram(dice_list)
 print("测试数据的平均dice值：{}".format(np.mean(dice_list)))
-
+print("测试数据的平均precision值：{}".format(np.mean(precision_list)))
+print("测试数据的平均recall值：{}".format(np.mean(recall_list)))
+print("测试数据的平均fscore值：{}".format(np.mean(fscore_list)))
+print("测试数据的平均jaccard值：{}".format(np.mean(jaccard_list)))
+print("测试数据的平均accuracy值：{}".format(np.mean(accuracy_list)))
+print("ASSD:{}, full marks:{}".format(np.mean(assd_list, axis=0), (0.0, 0.0)))
+print("hausdorff:{}, full marks:{}".format(np.mean(haus_list), 0.0))
+print("surface_overlap:{}, full marks:{}".format(np.mean(surface_list, axis=0), (1.0, 1.0)))
 
