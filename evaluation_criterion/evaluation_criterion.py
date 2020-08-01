@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 import os
-from surface_distance import metrics
+from evaluation_criterion.surface_distance.metrics import *
 
 
 def calPrecision(predict, label):
@@ -111,9 +111,11 @@ def cal_ASSD(predict, label):
     :param label:gt(ground truth)
     :return:
     """
-    surface_distances = metrics.compute_surface_distances(
+    predict = predict.astype(np.bool)
+    label = label.astype(np.bool)
+    surface_distances = compute_surface_distances(
         label, predict, spacing_mm=(1.0, 1.0))
-    avg_surf_dist = metrics.compute_average_surface_distance(surface_distances)
+    avg_surf_dist = compute_average_surface_distance(surface_distances)
     return avg_surf_dist
 
 
@@ -125,9 +127,11 @@ def cal_hausdorff(predict, label):
     :param label:
     :return:
     """
-    surface_distances = metrics.compute_surface_distances(
+    predict = predict.astype(np.bool)
+    label = label.astype(np.bool)
+    surface_distances = compute_surface_distances(
         label, predict, spacing_mm=(1.0, 1.0))
-    hd_dist_95 = metrics.compute_robust_hausdorff(surface_distances, 95)
+    hd_dist_95 = compute_robust_hausdorff(surface_distances, 95)
     return hd_dist_95
 
 
@@ -140,9 +144,11 @@ def cal_surface_overlap(predict, label):
     :param label:
     :return:
     """
-    surface_distances = metrics.compute_surface_distances(
+    predict = predict.astype(np.bool)
+    label = label.astype(np.bool)
+    surface_distances = compute_surface_distances(
         label, predict, spacing_mm=(1.0, 1.0))
-    surface_overlap = metrics.compute_surface_overlap_at_tolerance(surface_distances, 1)
+    surface_overlap = compute_surface_overlap_at_tolerance(surface_distances, 1)
     return surface_overlap
 
 
@@ -150,8 +156,11 @@ if __name__ == "__main__":
     current_path = os.getcwd()
     print(current_path)
     file_name = os.listdir(current_path)
-    for name in file_name:
-        if ".png" not in name:
+    # 倒序遍历，这样在删除的时候就不会因为删除前面的元素而导致index索引顺序错乱
+    for name in file_name[::-1]:
+        if ".png" in name:
+            pass
+        else:
             file_name.remove(name)
     print(file_name)
     img_num = len(file_name)
@@ -161,8 +170,8 @@ if __name__ == "__main__":
         img = cv.imread(img_path, 0)
         img_list.append(img)
     print(len(img_list))
-    predict = img_list[0]
-    label = img_list[1]
+    predict = img_list[3]
+    label = img_list[4]
 
     print("Precision:{}".format(calPrecision(predict, label)))
     print("Accuracy:{}".format(calAccuracy(predict, label)))
@@ -170,10 +179,7 @@ if __name__ == "__main__":
     print("Dice:{}".format(calDice(predict, label)))
     print("Jaccard:{}".format(calJaccard(predict, label)))
     print("Fscore:{}".format(calFscore(predict, label)))
-
-    predict = predict.astype(np.bool)
-    label = label.astype(np.bool)
-    print("ASSD:{}".format(cal_ASSD(predict, label)))
     # 较常用的metric：Hausdorff distance和Volumetric dice
-    print("hausdorff:{}".format(cal_hausdorff(predict, label)))
-    print("surface_overlap:{}".format(cal_surface_overlap(predict, label)))
+    print("ASSD:{}, full marks:{}".format(cal_ASSD(predict, label), (0.0, 0.0)))
+    print("hausdorff:{}, full marks:{}".format(cal_hausdorff(predict, label), 0.0))
+    print("surface_overlap:{}, full marks:{}".format(cal_surface_overlap(predict, label), (1.0, 1.0)))
