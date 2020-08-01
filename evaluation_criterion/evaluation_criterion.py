@@ -166,6 +166,7 @@ if __name__ == "__main__":
     print("Dice:{}".format(calDice(predict, label)))
     print("Jaccard:{}".format(calJaccard(predict, label)))
     print("Fscore:{}".format(calFscore(predict, label)))
+
     predict = predict.astype(np.bool)
     label = label.astype(np.bool)
     print("ASSD:{}".format(cal_ASSD(predict, label)))
