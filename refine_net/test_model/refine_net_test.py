@@ -2,7 +2,6 @@ from keras.models import load_model
 import numpy as np
 from keras import backend as K
 import tensorflow as tf
-# from vnet_25D.vnet11_1.vnet import dice_coef
 
 
 dir_num = 129
