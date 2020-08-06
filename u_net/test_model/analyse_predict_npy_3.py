@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
+import os
 from u_net.test_model.plot_test_dice_histogram import plot_test_dice_histogram
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
 from evaluation_criterion.eval_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
@@ -116,6 +117,11 @@ for i in range(len(npy_data)):
     # if i % 10 == 0:
     # if i >= 80:
     # if i >= 50:
+    predict_save_path_for_paper = "./predict_for_paper"
+    if not os.path.isdir(predict_save_path_for_paper):
+        os.makedirs(predict_save_path_for_paper)
+    predict_save_name_for_paper = "num_" + str(i + 1) + "_pixel_num_" + str(pixel_num) + "_U_Net" + ".png"
+    cv.imwrite(os.path.join(predict_save_path_for_paper, predict_save_name_for_paper), img)
     if False:
     # if True:
         plt.figure(1)
