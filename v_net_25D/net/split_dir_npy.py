@@ -9,8 +9,10 @@ import numpy as np
 
 train_png_path = "./data_dir_png/train"
 label_png_path = "./data_dir_png/label"
-train_npy_path = "./data_dir_npy_pre_mean/train"
-label_npy_path = "./data_dir_npy_pre_mean/label"
+# train_npy_path = "./data_dir_npy_pre_mean/train"
+# label_npy_path = "./data_dir_npy_pre_mean/label"
+train_npy_path = "../dataset/data_dir_npy/train"
+label_npy_path = "../dataset/data_dir_npy/label"
 if not os.path.isdir(train_png_path):
     os.makedirs(train_png_path)
 if not os.path.isdir(label_png_path):

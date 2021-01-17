@@ -12,7 +12,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 import keras
 from keras.models import *
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Dropout
+from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Dropout, Multiply
 from keras.optimizers import *
 from keras import layers
 from keras.layers.core import Lambda
@@ -148,14 +148,15 @@ class myUnet(object):
         x = Conv2D(64, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_x)
         x = self.BN_operation(x)
         adds = layers.add([wg, x])
-        psi = Conv2D(1, 1, activation='relu', padding='same', kernel_initializer='he_normal')(adds)
+        # 这里的激活函数都需要改成sigmoid，之前训练的网络都忘记修改了
+        # psi = Conv2D(1, 1, activation='relu', padding='same', kernel_initializer='he_normal')(adds)
+        psi = Conv2D(1, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(adds)
+        # def mul(inputs):
+        #     psi, x = inputs
+        #     return psi * x
+        # output = Lambda(mul)([psi, x])
 
-        def mul(inputs):
-            psi, x = inputs
-            return psi * x
-        # output = Lambda(lambda x: x * psi)
-        output = Lambda(mul)([psi, x])
-
+        output = Multiply()([psi, x])
         return output
 
     def get_unet(self):

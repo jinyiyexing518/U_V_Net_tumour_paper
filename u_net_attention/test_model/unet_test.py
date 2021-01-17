@@ -8,17 +8,24 @@
 from keras.models import load_model
 import numpy as np
 from keras import backend as K
+from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Dropout
+from keras import layers
 import tensorflow as tf
+import os
 # from vnet_25D.vnet11_1.vnet import dice_coef
+from u_net_attention.net.unet_attention_tumour import myUnet
 
 
 dir_num = 129
-model_num = "4_6"
-model = "tumour"
+model_num = "5"
+model = "attention_tumour"
 
-test_npy = "../dataset/unet_1_1_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"
+test_npy = "../../u_net/dataset/unet_1_1_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"
 model_name = "./model_pre_mean/unet_" + model + model_num + ".hdf5"
-predict_result = "./predict_npy_pre_mean/predict" + str(dir_num) + "_" + model \
+predict_save_path = "./predict_npy_pre_mean"
+if not os.path.isdir(predict_save_path):
+    os.makedirs(predict_save_path)
+predict_result = predict_save_path + "/predict" + str(dir_num) + "_" + model \
                  + "_epoch" + model_num + ".npy"
 
 
@@ -79,11 +86,4 @@ def test_model_fun():
 
 if __name__ == "__main__":
     test_model_fun()
-
-
-
-
-
-
-
 

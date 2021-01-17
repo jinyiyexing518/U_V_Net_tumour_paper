@@ -1,2 +1,5 @@
 本工程文件夹，为了paper，做对比实验
 dataset中的数据，预处理结果可以直接从V_Net_tumour_processing_data工程文件夹中获取
+
+vnet_25D_para:model3 86.87
+vnet_25D_processing的模型是：88.92（在另一个工程文件夹中）

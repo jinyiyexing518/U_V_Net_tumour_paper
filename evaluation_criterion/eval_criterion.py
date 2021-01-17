@@ -16,6 +16,8 @@ def calPrecision(predict, label):
                 TP_NP += 1
                 if label[i][j] == 255:
                     TP += 1
+    if TP_NP == 0:
+        TP_NP = 1
     Precision = TP / TP_NP
 
     return Precision
@@ -97,6 +99,7 @@ def calFscore(predict, label):
     """
     recall = calRecall(predict, label)
     accuracy = calAccuracy(predict, label)
+    # 这里应该将accuracy改成Precision
     Fscore = 2 * recall * accuracy / (recall + accuracy)
 
     return Fscore
@@ -152,6 +155,23 @@ def cal_surface_overlap(predict, label):
     return surface_overlap
 
 
+def cal_RVD(predict, label):
+    """
+    计算RVD系数
+    """
+    row, col = predict.shape
+    A, B = 0.0, 0.0
+    for i in range(row):
+        for j in range(col):
+            if predict[i][j] == 255:
+                A += 1
+            if label[i][j] == 255:
+                B += 1
+    RVD = (A/B - 1)
+
+    return RVD
+
+
 if __name__ == "__main__":
     current_path = os.getcwd()
     print(current_path)
@@ -183,3 +203,4 @@ if __name__ == "__main__":
     print("ASSD:{}, full marks:{}".format(cal_ASSD(predict, label), (0.0, 0.0)))
     print("hausdorff:{}, full marks:{}".format(cal_hausdorff(predict, label), 0.0))
     print("surface_overlap:{}, full marks:{}".format(cal_surface_overlap(predict, label), (1.0, 1.0)))
+    print("RVD:{}".format(cal_RVD(predict, label)))

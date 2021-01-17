@@ -6,7 +6,7 @@ import tensorflow as tf
 
 
 dir_num = 129
-model_num = "5"
+model_num = "4_6"
 model = "tumour"
 
 test_npy = "../dataset/unet_1_1_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"

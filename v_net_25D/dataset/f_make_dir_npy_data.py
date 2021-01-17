@@ -7,10 +7,14 @@ import cv2 as cv
 import numpy as np
 
 
+# # 处理过床位窗宽的train图像
+# train_png_path = "./data_cv_clip/train"
+# # label标签
+# label_png_path = "./data_cv_clip/label"
 # 处理过床位窗宽的train图像
-train_png_path = "./data_cv_clip/train"
+train_png_path = "./data_cv_clip_whole/train"
 # label标签
-label_png_path = "./data_cv_clip/label"
+label_png_path = "./data_cv_clip_whole/label"
 train_dir_npy_save_path = "./data_dir_npy/train"
 label_dir_npy_save_path = "./data_dir_npy/label"
 if not os.path.isdir(train_dir_npy_save_path):

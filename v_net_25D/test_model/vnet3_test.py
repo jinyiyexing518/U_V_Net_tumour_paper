@@ -7,7 +7,7 @@ import os
 
 
 dir_num = 129
-model_num = "5"
+model_num = "5_1"
 model = "tumour"
 
 test_npy = "../dataset/vnet_3_1_test_npy/train/" + str(dir_num) + "/" + str(dir_num) + ".npy"

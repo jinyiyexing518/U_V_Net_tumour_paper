@@ -5,7 +5,7 @@ import numpy as np
 from v_net_25D_para.test_model.plot_test_dice_histogram import plot_test_dice_histogram
 # from vnet_25D.vnet11_1.test_model.vnet_test import dir_num
 from evaluation_criterion.eval_criterion import calPrecision, calAccuracy, calRecall, calFscore, calJaccard, \
-    cal_ASSD, cal_hausdorff, cal_surface_overlap
+    cal_ASSD, cal_hausdorff, cal_surface_overlap, cal_RVD
 
 
 # 计算DICE系数
@@ -29,9 +29,16 @@ from v_net_25D_para.test_model.vnet3_test import dir_num, model_num, model
 # model = "liver"
 
 imgs_size = 400
+threshold = 90
 
 predict_npy = "./predict_npy_pre_mean/predict" + str(dir_num) + "_" + model\
               + "_epoch" + model_num + ".npy"
+
+log_path = "./log_of_test"
+if not os.path.isdir(log_path):
+    os.makedirs(log_path)
+log_file_name = os.path.join(log_path, model + model_num + "log_of_test" + ".txt")
+log_file = open(log_file_name, "w")
 
 # 标签
 label_path = "../dataset/vnet_3_1_test_npy/label/" + str(dir_num) + "/" + str(dir_num) + ".npy"
@@ -51,6 +58,7 @@ recall_list = []
 assd_list = []
 haus_list = []
 surface_list = []
+RVD_list = []
 for i in range(len(npy_data)):
     img = npy_data[i]
     label = npy_label[i]
@@ -70,8 +78,8 @@ for i in range(len(npy_data)):
     # 这里应该使用copy，否则会指向同一存储单元，原始img改变，此值随之改变
     origin = img.copy()
 
-    img[img > 90] = 255
-    img[img <= 90] = 0
+    img[img > threshold] = 255
+    img[img <= threshold] = 0
 
     ################################################
     # 开操作和闭操作
@@ -95,11 +103,18 @@ for i in range(len(npy_data)):
     ASSD = cal_ASSD(img, label)
     hausdorff = cal_hausdorff(img, label)
     surface_overlap = cal_surface_overlap(img, label)
+    RVD = cal_RVD(img, label)
 
     print("第{}组数据---dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{} "
-          "ASSD:{} hausdorff:{} surface_overlap:{}"
+          "ASSD:{} hausdorff:{} surface_overlap:{} RVD:{}"
           .format(i+1, dice, Precision, Recall, Fscore, Jaccard, Accuracy,
-                  ASSD, hausdorff, surface_overlap), pixel_num)
+                  ASSD, hausdorff, surface_overlap, RVD), pixel_num)
+    log_file.writelines("第{}组数据---dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{} "
+                        "ASSD:{} hausdorff:{} surface_overlap:{} RVD:{} pixel_num:{}"
+                        .format(i+1, dice, Precision, Recall, Fscore, Jaccard, Accuracy,
+                        ASSD, hausdorff, surface_overlap, RVD, pixel_num))
+    log_file.writelines("\n")
+
     dice_list.append(dice*100)
     precision_list.append(Precision*100)
     recall_list.append(Recall*100)
@@ -109,6 +124,7 @@ for i in range(len(npy_data)):
     assd_list.append(ASSD)
     haus_list.append(hausdorff)
     surface_list.append(surface_overlap)
+    RVD_list.append(RVD)
 
     # 查看dice系数较小的分割结果
     # 会发现，dice系数较小的分割结果，往往都是肝脏占比比较小的图像
@@ -117,10 +133,11 @@ for i in range(len(npy_data)):
     # if i % 10 == 0:
     # if i >= 80:
     # if i >= 50:
-    predict_save_path_for_paper = "./predict_for_paper"
+    predict_save_path_for_paper = "./predict_for_paper" + "model_" + str(model_num)
     if not os.path.isdir(predict_save_path_for_paper):
         os.makedirs(predict_save_path_for_paper)
-    predict_save_name_for_paper = "num_" + str(i + 1) + "_pixel_num_" + str(pixel_num) + "_UV_Net" + ".png"
+    predict_save_name_for_paper = "num_" + str(i + 1) + "_pixel_num_" + str(pixel_num) + "_dice_" \
+                                  + str(round(dice, 4)) + "_UV_Net" + ".png"
     cv.imwrite(os.path.join(predict_save_path_for_paper, predict_save_name_for_paper), img)
     if False:
     # if True:
@@ -164,7 +181,20 @@ print("测试数据的平均accuracy值：{}".format(np.mean(accuracy_list)))
 print("ASSD:{}, full marks:{}".format(np.mean(assd_list, axis=0), (0.0, 0.0)))
 print("hausdorff:{}, full marks:{}".format(np.mean(haus_list), 0.0))
 print("surface_overlap:{}, full marks:{}".format(np.mean(surface_list, axis=0), (1.0, 1.0)))
+print("RVD:{}".format(np.mean(RVD_list)))
+log_file.writelines("\n")
+log_file.writelines("最终的平均测试结果")
+log_file.writelines("\n")
+log_file.writelines("dice:{} precison:{} recall:{} fscore:{} jaccard:{} accuracy:{} "
+                    "ASSD:{} full_marks: {} hausdorff:{} full_marks: {} surface_overlap:{} full_marks:{} RVD:{}"
+                    .format(np.mean(dice_list), np.mean(precision_list), np.mean(recall_list), np.mean(fscore_list),
+                            np.mean(jaccard_list), np.mean(accuracy_list),
+                    np.mean(assd_list, axis=0), (0.0, 0.0), np.mean(haus_list), 0.0, np.mean(surface_list, axis=0), (1.0, 1.0), np.mean(RVD_list)))
+log_file.writelines("\n")
+log_file.writelines("model_name: {} \nmodel_num:{} \nthreshold: {}".format(model, model_num, threshold))
+log_file.writelines("\n")
 
+log_file.close()
 
 
 
