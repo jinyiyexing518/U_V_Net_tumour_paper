@@ -114,7 +114,20 @@ def mycrossentropy(y_true, y_pred, e=0.1):
     return (1 - e) * loss1 + e * loss2
 
 
-class myVnet(object):
+# 自定义损失函数
+def cross_loss(y_true, y_pred, ratio=0.9):
+    y_true = K.cast(y_true, dtype=tf.float32)
+    # 计算dice-loss
+    dice_loss = 1. - dice_coef(y_true, y_pred)
+    # 计算交叉熵损失
+    entropy_loss = K.mean(K.binary_crossentropy(y_true, y_pred), axis=-1)
+    # 目前暂时不会如何按照epoch来衰减比例，只能做求和
+    last_loss = ratio * entropy_loss + (1.0 - ratio) * dice_loss
+
+    return last_loss
+
+
+class myUVnet(object):
     def __init__(self, img_depth=3, img_rows=img_size, img_cols=img_size, img_channel=1, drop=0.5):
         self.img_depth = img_depth
         self.img_rows = img_rows
@@ -143,17 +156,33 @@ class myVnet(object):
     #
     #     output = Multiply()([psi, x])
     #     return output
+    def Attention_block(self, input_w, input_x):
+        wg = Conv3D(64, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_w)
+        wg = self.BN_operation(wg)
+        x = Conv3D(64, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_x)
+        x = self.BN_operation(x)
+        adds = layers.add([wg, x])
+        psi = Conv3D(1, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(adds)
+
+        # def mul(inputs):
+        #     psi, x = inputs
+        #     return psi * x
+        # # output = Lambda(lambda x: x * psi)
+        # output = Lambda(mul)([psi, x])
+        output = Multiply()([psi, x])
+
+        return output
 
     def Scale_attention_module(self, input_weight, input_map, kernel_num):
         weight = Conv3D(kernel_num, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_weight)
         weight = self.BN_operation(weight)
-        map = Conv3D(kernel_num, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_map)
-        map = self.BN_operation(map)
+        maps = Conv3D(kernel_num, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_map)
+        maps = self.BN_operation(maps)
 
-        adds = layers.add([weight, map])
+        adds = layers.add([weight, maps])
         attention = Conv3D(1, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(adds)
         # 首先得到基于Attention机制的特征图，对原始特征图目标进行了一次强化
-        attention_output = Multiply()([attention, map])
+        attention_output = Multiply()([attention, maps])
 
         conv = Conv3D(kernel_num, 1, activation='relu', padding='same', kernel_initializer='he_normal')(attention_output)
         # 然后继续进行scale-attention，继续强化尺度特征
@@ -164,7 +193,7 @@ class myVnet(object):
         scale1 = self.BN_operation(scale1)
         scale1 = Dropout(self.drop)(scale1)
         scale1 = layers.add([conv, scale1])
-        scale1 = Conv3D(kernel_num, 1, activation='relu', padding='same', kernel_initializer='he_normal')(scale1)
+        scale1 = Conv3D(kernel_num, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(scale1)
 
         scale2 = Conv3D(kernel_num, [1, 3, 3], activation='relu', padding='same', kernel_initializer='he_normal')(attention_output)
         scale2 = self.BN_operation(scale2)
@@ -173,7 +202,7 @@ class myVnet(object):
         scale2 = self.BN_operation(scale2)
         scale2 = Dropout(self.drop)(scale2)
         scale2 = layers.add([conv, scale2])
-        scale2 = Conv3D(kernel_num, 1, activation='relu', padding='same', kernel_initializer='he_normal')(scale2)
+        scale2 = Conv3D(kernel_num, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(scale2)
 
         scale3 = Conv3D(kernel_num, [1, 5, 5], activation='relu', padding='same', kernel_initializer='he_normal')(attention_output)
         scale3 = self.BN_operation(scale3)
@@ -184,7 +213,7 @@ class myVnet(object):
         scale3 = layers.add([conv, scale3])
         # res = Conv3D(kernel_num, [3, 1, 1], activation='relu', padding='valid',
         #              kernel_initializer='he_normal')(res)
-        scale3 = Conv3D(kernel_num, 1, activation='relu', padding='same', kernel_initializer='he_normal')(scale3)
+        scale3 = Conv3D(kernel_num, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(scale3)
 
         # scale1_weight = GlobalAveragePooling3D()(scale1[:, :, :, :])
         # scale2_weight = GlobalAveragePooling3D()(scale2[:, :, :, :])
@@ -225,42 +254,43 @@ class myVnet(object):
         res = layers.add([deconv, conv])
         return res
 
-    # V-Net网络
+    # UV-Net-scale-attention网络
     def get_vnet(self):
         inputs = Input((self.img_depth, self.img_rows, self.img_cols, self.img_channel))
 
+        first_map = 16
         # 卷积层1
-        conv1 = self.encode_layer(32, inputs)
+        conv1 = self.encode_layer(first_map, inputs)
         # 下采样1
-        down1 = self.down_operation(64, [1, 3, 3], conv1)
+        down1 = self.down_operation(first_map * 2, [1, 3, 3], conv1)
 
         # 卷积层2
-        conv2 = self.encode_layer(64, down1)
+        conv2 = self.encode_layer(first_map * 2, down1)
         # 下采样2
-        down2 = self.down_operation(128, [1, 3, 3], conv2)
+        down2 = self.down_operation(first_map * 4, [1, 3, 3], conv2)
 
         # 卷积层3
-        conv3 = self.encode_layer(128, down2)
+        conv3 = self.encode_layer(first_map * 4, down2)
         # 下采样3
-        down3 = self.down_operation(256, [1, 3, 3], conv3)
+        down3 = self.down_operation(first_map * 8, [1, 3, 3], conv3)
 
         # 卷积层4
-        conv4 = self.encode_layer(256, down3)
+        conv4 = self.encode_layer(first_map * 8, down3)
         # 下采样4
-        down4 = self.down_operation(512, [1, 3, 3], conv4)
+        down4 = self.down_operation(first_map * 16, [1, 3, 3], conv4)
 
         # 卷积层5
-        conv5 = self.encode_layer(512, down4)
-        conv5 = Conv3D(512, [3, 1, 1], activation='relu', padding='valid',
+        conv5 = self.encode_layer(first_map * 16, down4)
+        conv5 = Conv3D(first_map * 16, [3, 1, 1], activation='relu', padding='valid',
                        kernel_initializer='he_normal')(conv5)
         #######################################################################################################################
         # 反卷积6
-        deconv6 = Deconvolution3D(256, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
+        deconv6 = Deconvolution3D(first_map * 8, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
                                   kernel_initializer='he_normal')(conv5)
-        conv4 = Conv3D(256, [3, 1, 1], activation='relu', padding='valid',
+        conv4 = Conv3D(first_map * 8, [3, 1, 1], activation='relu', padding='valid',
                        kernel_initializer='he_normal')(conv4)
-        merge6 = Concatenate(axis=4)([deconv6, conv4])
-        conv6 = Conv3D(256, [1, 3, 3], activation='relu', padding='same',
+        merge6 = self.Attention_block(conv4, deconv6)
+        conv6 = Conv3D(first_map * 8, [1, 3, 3], activation='relu', padding='same',
                        kernel_initializer='he_normal')(merge6)
         conv6 = Dropout(self.drop)(conv6)
         res6 = layers.add([deconv6, conv6])
@@ -268,14 +298,14 @@ class myVnet(object):
 
         #######################################################################################################################
         # 反卷积7
-        deconv7 = Deconvolution3D(128, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
+        deconv7 = Deconvolution3D(first_map * 4, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
                                   kernel_initializer='he_normal')(res6)
-        conv3 = Conv3D(128, [3, 1, 1], activation='relu', padding='valid',
+        conv3 = Conv3D(first_map * 4, [3, 1, 1], activation='relu', padding='valid',
                        kernel_initializer='he_normal')(conv3)
         # conv3 = Conv3D(128, [3, 1, 1], activation='relu', padding='valid',
         #                kernel_initializer='he_normal')(conv3)
-        merge7 = Concatenate(axis=4)([deconv7, conv3])
-        conv7 = Conv3D(128, [1, 3, 3], activation='relu', padding='same',
+        merge7 = self.Attention_block(conv3, deconv7)
+        conv7 = Conv3D(first_map * 4, [1, 3, 3], activation='relu', padding='same',
                        kernel_initializer='he_normal')(merge7)
         conv7 = Dropout(self.drop)(conv7)
         res7 = layers.add([deconv7, conv7])
@@ -283,16 +313,16 @@ class myVnet(object):
 
         #######################################################################################################################
         # 反卷积8
-        deconv8 = Deconvolution3D(64, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
+        deconv8 = Deconvolution3D(first_map * 2, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
                                   kernel_initializer='he_normal')(res7)
-        conv2 = Conv3D(64, [3, 1, 1], activation='relu', padding='valid',
+        conv2 = Conv3D(first_map * 2, [3, 1, 1], activation='relu', padding='valid',
                        kernel_initializer='he_normal')(conv2)
         # conv2 = Conv3D(64, [3, 1, 1], activation='relu', padding='valid',
         #                kernel_initializer='he_normal')(conv2)
         # conv2 = Conv3D(64, [3, 1, 1], activation='relu', padding='valid',
         #                kernel_initializer='he_normal')(conv2)
-        merge8 = Concatenate(axis=4)([deconv8, conv2])
-        conv8 = Conv3D(64, [1, 3, 3], activation='relu', padding='same',
+        merge8 = self.Attention_block(conv2, deconv8)
+        conv8 = Conv3D(first_map * 2, [1, 3, 3], activation='relu', padding='same',
                        kernel_initializer='he_normal')(merge8)
         conv8 = Dropout(self.drop)(conv8)
         res8 = layers.add([deconv8, conv8])
@@ -300,9 +330,9 @@ class myVnet(object):
 
         #######################################################################################################################
         # 反卷积9
-        deconv9 = Deconvolution3D(32, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
+        deconv9 = Deconvolution3D(first_map, [1, 3, 3], strides=(1, 2, 2), activation='relu', padding='same',
                                   kernel_initializer='he_normal')(res8)
-        conv1 = Conv3D(32, [3, 1, 1], activation='relu', padding='valid',
+        conv1 = Conv3D(first_map, [3, 1, 1], activation='relu', padding='valid',
                        kernel_initializer='he_normal')(conv1)
         # conv1 = Conv3D(32, [3, 1, 1], activation='relu', padding='valid',
         #                kernel_initializer='he_normal')(conv1)
@@ -310,8 +340,8 @@ class myVnet(object):
         #                kernel_initializer='he_normal')(conv1)
         # conv1 = Conv3D(32, [3, 1, 1], activation='relu', padding='valid',
         #                kernel_initializer='he_normal')(conv1)
-        merge9 = Concatenate(axis=4)([deconv9, conv1])
-        conv9 = Conv3D(32, [1, 3, 3], activation='relu', padding='same',
+        merge9 = self.Attention_block(conv1, deconv9)
+        conv9 = Conv3D(first_map, [1, 3, 3], activation='relu', padding='same',
                        kernel_initializer='he_normal')(merge9)
         conv9 = Dropout(self.drop)(conv9)
         res9 = layers.add([deconv9, conv9])
@@ -328,7 +358,9 @@ class myVnet(object):
         # model.compile(optimizer=Adam(lr=1e-4), loss=losses.weighted_binary_crossentropy,
         #               metrics=['accuracy', dice_coef])
         # model.compile(optimizer=Adam(lr=1e-4), loss=dice_coef_loss, metrics=['accuracy',dice_coef])
-        model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy',dice_coef])
+
+        # model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy', dice_coef])
+        model.compile(optimizer=Adam(lr=1e-4), loss=cross_loss, metrics=['accuracy', dice_coef])
         print('model compile')
         return model
 
@@ -372,8 +404,8 @@ class myVnet(object):
 
 
 if __name__ == '__main__':
-    myvnet = myVnet()
-    myvnet.train()
+    myuvnet = myUVnet()
+    myuvnet.train()
 
 
 

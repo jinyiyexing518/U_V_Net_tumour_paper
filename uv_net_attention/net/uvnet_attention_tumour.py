@@ -142,7 +142,7 @@ class myUVnet(object):
         x = Conv3D(64, 1, activation=None, padding='same', kernel_initializer='he_normal')(input_x)
         x = self.BN_operation(x)
         adds = layers.add([wg, x])
-        psi = Conv3D(1, 1, activation='relu', padding='same', kernel_initializer='he_normal')(adds)
+        psi = Conv3D(1, 1, activation='sigmoid', padding='same', kernel_initializer='he_normal')(adds)
 
         # def mul(inputs):
         #     psi, x = inputs
