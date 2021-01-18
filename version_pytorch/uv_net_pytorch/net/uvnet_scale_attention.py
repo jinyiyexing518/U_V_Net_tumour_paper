@@ -1,8 +1,8 @@
 """ -*- coding: utf-8 -*-
-@ Time: 2021/1/18 13:59
+@ Time: 2021/1/18 14:30
 @ author: Zhang Chi
 @ e-mail: 220200785@mail.seu.edu.cn
-@ file: attention_unet.py
+@ file: uvnet_scale_attention.py
 @ project: U_V_Net_tumour_paper
 """
 import torch
